@@ -1,167 +1,104 @@
 #include <iostream>
 #include <vector>
+#include <queue>
 #include <algorithm>
+#include <set>
+#define INFINITY 100000000
+
+/*
+CCC 2021 S4 - Daily Commute
+This is a breadth first search problem (BFS).
+Important things to note that will help us create our algorithm:
+1. You will only ever leave the train once at max, because if you get off the train and use a walkway to get ahead but do not reach station N, you'll have to wait for the train to catch up effectively taking the same time as if you never left to begin with
+2. The time it takes to walk from station i to station N remains constant regardless of station placement, this defies all logic but it's what the question states
+3. For each day, you only need to calculate the new times for the 2 new stations, nothing else has changed
+4. The base time each day must be the time it takes to go from station 1 to station N by train only
+
+Therefore, the optimal solution is either the base time, or a combination of train + walkways that allows the user to get to station N faster
+Total distance for each station in the route = Subway to station i time + station i to station N walking time supposing there's a path
+
+To determine the walking times we will use a breadth first search
+We will use a multiset to store the total times because the question is not asking for index, instead it's asking for the minimum time which is perfect
+*/
 
 int main(){
-    int N; // # of stations
-    int W; // # of walkways
-    int D; // # of days
 
-    std::cin >> N;
-    std::cin >> W;
-    std::cin >> D;
+    int N, W, D;
+    std::cin >> N >> W >> D;
 
-    //Collect walkway inputs
-    std::vector<int> walkway_start(W);
-    std::vector<int> walkway_stop(W);
+    std::vector<int> walkways[N + 1]; //array of vectors, walkways[n] is a vector containing all connecting stations to station n
 
     for (int i = 0; i < W; i++){
-        std::cin >> walkway_start[i];
-        std::cin >> walkway_stop[i];
+        int start, stop;
+        std::cin >> start >> stop;
+        walkways[stop].push_back(start); //Append in reverse for the breadth first search
     }
 
-    //Collect initial subway route
-    std::vector<int> subway_route(N);
-    for (int i = 0; i < N; i++){
-        std::cin >> subway_route[i];
-    }
+    //Calculate walking time from station i to station N
+    //Breadth First Search
 
-    //Collect daily route changes
-    std::vector<int> changes1(D);
-    std::vector<int> changes2(D);
-    for (int i = 0; i < D; i++){
-        std::cin >> changes1[i];
-        std::cin >> changes2[i];
+    std::queue<int> stack;
+    std::vector<bool> alreadyvisited(N + 1, false); //to prevent revisiting the same node
+    std::vector<int> walkwaytimes(N + 1, INFINITY); //INF to help us sort our multiset later, indicates there's no possible walkway
+    walkwaytimes[N] = 0;
+    alreadyvisited[N] = 1;
+    stack.push(N);
+    int time = 0;
 
-        //To match with index number
-        changes1[i] -= 1;
-        changes2[i] -= 1;
-    }
+    while(stack.empty() != true){
 
-    //Initialise some variables
-    int temp;
-    int start;
-    int time;
-    int elements_remaining_per_level;
-    std::vector<int> stack;
-    std::vector<int> already_visited;
-    std::vector<int> times(D, 2147483647);
+        int curstation = stack.front();
+        stack.pop();
 
-    //For each day...
-    for (int d = 0; d < D; d++){
-        //Adjust subway route according to day
-        temp = subway_route[changes1[d]];
-        subway_route[changes1[d]] = subway_route[changes2[d]];
-        subway_route[changes2[d]] = temp;
+        for (const int connectingstation: walkways[curstation]){
 
-        /*
-        //Testing route changes
-        std::cout << '\n';
-        for (int i = 0; i < N; i++){
-        std::cout << subway_route[i] << " ";
-        }
-        std::cout << '\n';
-        */
-
-        //Breadth first search/Brute force
-        for (int i = 0; i < N; i++){
-            start = subway_route[i];
-            time = i;
-            stack.push_back(start);
-            elements_remaining_per_level = 1;
-
-            //In case there's no possible walkways
-            while (true){
-
-                /*
-                //TEST
-                for (int u = 0; u < stack.size(); u++){
-                    std::cout << stack[u] << " ";
-                }
-                std::cout << '\n';
-                */
-
-                //Find possible initial walkways
-                for (int z = 0; z < W; z++){
-
-                    if (walkway_start[z] == stack[0]){
-
-                        if (std::find(already_visited.begin(), already_visited.end(), walkway_start[z]) != already_visited.end()){
-                            continue;
-                        }
-
-                        else{
-                            stack.push_back(walkway_stop[z]);
-                        }
-                        
-                    }
-
-                }
-
-                if (stack[0] == N){
-
-                    if (time < times[d]){
-                        times[d] = time;
-                    }
-
-                    stack.clear();
-                    already_visited.clear();
-                    break;
-                }
-
-                already_visited.push_back(stack[0]);
-                stack.erase(stack.begin());
-
-                //In case of dead end or having fully traversed the tree
-                if (stack.size() == 0){
-                    already_visited.clear();
-                    break;
-                }
-
-                elements_remaining_per_level -= 1;
-
-                if (elements_remaining_per_level == 0){
-                    time += 1;
-                    elements_remaining_per_level = stack.size();
-                }
-
+            if (!alreadyvisited[connectingstation]){
+                walkwaytimes[connectingstation] = walkwaytimes[curstation] + 1; //Connecting stations will always be 1 more minute away from the current station
+                stack.push(connectingstation);
             }
 
+            alreadyvisited[connectingstation] = true;
+
         }
 
     }
 
-    for (int i = 0; i < times.size(); i++){
-        std::cout << times[i] << '\n';
+    //Calculate initial time for subway route
+    std::vector<int> subwayroute(N + 1);
+    //indices don't matter for this problem as we're only searching for the minimum time, making multiset extremely useful here as it sorts the times and allows for quick erasing and insertion of elements
+    std::multiset<int> cumulativeTime; 
+    subwayroute[0] = 0; //Dummy value
+
+    for (int i = 1; i < N + 1; i++){
+        std::cin >> subwayroute[i];
+        cumulativeTime.insert(i - 1 + walkwaytimes[subwayroute[i]]); //calculate cumulative time = subway to station i + walking distance from i to N
     }
 
+    int temp;
+    int value;
+    //Determining minimum time each day
+    for (int d = 0; d < D; d++){
+        int changes1, changes2;
+        std::cin >> changes1 >> changes2;
 
-    //Test Print
-    /*
-    std::cout << '\n';
+        //Erase previous times for swapped stations that are to be swapped
+        value = changes1 - 1 + walkwaytimes[subwayroute[changes1]];
+        cumulativeTime.erase(cumulativeTime.find(value)); //important that .find() is used because otherwise all instances of the value would be removed
 
-    for (int i = 0; i < N; i++){
-        std::cout << subway_route[i] << " ";
+        value = changes2 - 1 + walkwaytimes[subwayroute[changes2]];
+        cumulativeTime.erase(cumulativeTime.find(value));
+
+        //Swap stations
+        temp = subwayroute[changes1];
+        subwayroute[changes1] = subwayroute[changes2];
+        subwayroute[changes2] = temp;
+
+        //Add new times
+        cumulativeTime.insert(changes1 - 1 + walkwaytimes[subwayroute[changes1]]);
+        cumulativeTime.insert(changes2 - 1 + walkwaytimes[subwayroute[changes2]]);
+
+        std::cout << *cumulativeTime.begin() << '\n'; //multiset is always ordered meaning the minimum time is always at the front
     }
-
-    std::cout << '\n';
-
-    for (int i = 0; i < W; i++){
-        std::cout << walkway_start[i] << " " << walkway_stop[i] << '\n';
-    }
-
-    for (int i = 0; i < D; i++){
-        std::cout << changes1[i] << " " << changes2[i] << '\n';
-    }
-
-    std::cout << '\n' << '\n';
-
-    for (int i = 0; i < times.size(); i++){
-        std::cout << times[i] << ' ';
-    }
-    */
 
     return 0;
-
 }
-
