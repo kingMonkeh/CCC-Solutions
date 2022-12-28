@@ -20,38 +20,33 @@ int main(){
     std::cin >> N >> M;
 
     //Collect requirements
-    std::vector<int> X(2000);
-    std::vector<int> Y(2000);
-    std::vector<int> Z(2000);
-    std::vector<int> seq(N+1, 1); //Initialize sequence
+    std::vector<int> X(M);
+    std::vector<int> Y(M);
+    std::vector<int> Z(M);
+
+    std::vector<int> divisors[150001];
 
     for (int i = 0; i < M; i++){
         std::cin >> X[i] >> Y[i] >> Z[i];
 
-        if (Z[i] == 2){
-            for (int A = X[i]; A <= Y[i]; A++){
-                seq[A] = 2;
-            }
+        for (int a = X[i]; a <= Y[i]; a++){
+            divisors[a].push_back(Z[i]);
         }
 
     }
 
+    //Initialize sequence
+    std::vector<int> seq(N+1, 1); 
+
+    for (int i = 1; i <= N; i++){
+        //Something
+    }
+
     bool valid = true;
-    bool one = false;
     for (int i = 0; i < M; i++){
 
-        one = false;
-
         for (int a = X[i]; a <= Y[i]; a++){
-
-            if (seq[a] == 1){
-                one = true;
-            }
-
-        }
-
-        if (Z[i] == 1 && one == false){
-            valid = false;
+            //something
         }
 
     }
