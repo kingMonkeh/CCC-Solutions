@@ -1,6 +1,6 @@
 /*
 
-2002 S3 - Blindfold
+2002 J5/S3 - Blindfold
 
 Difficulty: Easy or Hard depending on what judge you're using
 

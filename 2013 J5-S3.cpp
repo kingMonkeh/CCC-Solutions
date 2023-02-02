@@ -1,6 +1,6 @@
 /*
 
-2013 S3 - Chances of Winning
+2013 J5/S3 - Chances of Winning
 
 Difficulty: Easy
 
