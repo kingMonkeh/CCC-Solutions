@@ -1,5 +1,7 @@
 # CCC-Solutions
 
+Edit: Although I completely bombed CCC 2024, I still got into UW CS :)
+
 Hello.
 
 These are my CCC solutions that I've created as I practice for the CCC.
